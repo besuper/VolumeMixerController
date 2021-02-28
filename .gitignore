@@ -1,0 +1,6 @@
+/bin
+/obj
+/Properties
+App.config
+MixerControllerF.csproj
+packages.config
