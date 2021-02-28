@@ -6,11 +6,13 @@ A program to control Windows volume mixer with WebSocket.
 ## Download & installation
 
 You can download the lastest version in [releases sections](https://github.com/besuper/VolumeMixerController/releases).
+
 Extract all files in a folder and run `MixerController.exe`
 
 ## Usage
 
 You can connect to the WebSocket server as you want. 
+
 You can use those commands: 
 |Instruction| Description |
 |--|--|
@@ -22,4 +24,5 @@ You can use those commands:
 ## Settings
 
 You can change listen ip and port as you want in settings.txt. 
+
 Find it at `%appdata%/MixerController` or right-click in system tray app and click on Settings.
