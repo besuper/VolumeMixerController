@@ -71,7 +71,7 @@ namespace MixerControllerF {
 
                         RefreshApps();
 
-                        string to_send = "APPS;{\"apps\":{";
+                        string to_send = "{\"apps\":{";
 
                         foreach (KeyValuePair<string, float> entry in apps) {
                             to_send += "\"" + entry.Key + "\":\"" + entry.Value + "\",";
