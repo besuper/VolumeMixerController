@@ -12,9 +12,21 @@ using System.IO;
 
 namespace MixerControllerF {
 
-    static class Program {
+    public class SoundApplication {
 
-        public static Dictionary<string, float> apps = new Dictionary<string, float>();
+        public SoundApplication(float volume, ref SimpleAudioVolume audioInt) {
+            Volume = volume;
+            AudioInt = audioInt;
+        }
+
+        public float Volume { get; }
+
+        public SimpleAudioVolume AudioInt { get; }
+
+    }
+
+    static class Program {
+        public static Dictionary<string, SoundApplication> applications = new Dictionary<string, SoundApplication>();
 
         [MTAThread]
         static void Main() {
@@ -35,10 +47,7 @@ namespace MixerControllerF {
 
             if (File.Exists(path)) {
                 using (StreamReader sr = File.OpenText(path)) {
-                    string s = "";
-                    while ((s = sr.ReadLine()) != null) {
-                        ip = s;
-                    }
+                    ip = sr.ReadLine();
                 }
             }
 
@@ -73,8 +82,8 @@ namespace MixerControllerF {
 
                         string to_send = "{\"apps\":{";
 
-                        foreach (KeyValuePair<string, float> entry in apps) {
-                            to_send += "\"" + entry.Key + "\":\"" + entry.Value + "\",";
+                        foreach (KeyValuePair<string, SoundApplication> entry in applications) {
+                            to_send += "\"" + entry.Key + "\":\"" + entry.Value.Volume + "\",";
                         }
 
                         to_send = to_send.Remove(to_send.Length - 1);
@@ -87,61 +96,48 @@ namespace MixerControllerF {
                 };
             });
 
-            Application.Run(new MyCustomApplicationContext());
+            Application.Run(new DefaultApp());
+        }
+
+        public static SoundApplication GetApplication(string app_name) {
+            if (applications.ContainsKey(app_name)) {
+
+                SoundApplication app = null;
+
+                applications.TryGetValue(app_name, out app);
+
+                return app;
+            }
+
+            return null;
         }
 
         public static void ChangeVolume(string app_name, float volume) {
-            using (var sessionManager = GetDefaultAudioSessionManager2(DataFlow.Render)) {
+            SoundApplication app = GetApplication(app_name);
 
-                using (var sessionEnumerator = sessionManager.GetSessionEnumerator()) {
+            if (app == null) return;
 
-                    foreach (var session in sessionEnumerator) {
-
-                        using (var simpleVolume = session.QueryInterface<SimpleAudioVolume>())
-                        using (var sessionControl = session.QueryInterface<AudioSessionControl2>()) {
-
-                            if (sessionControl.Process.ProcessName.Contains(app_name)) {
-
-                                if (volume > 0 && simpleVolume.IsMuted) {
-                                    simpleVolume.IsMuted = false;
-                                }
-
-                                simpleVolume.MasterVolume = (volume / 100);
-                            }
-
-                            RefreshApps();
-
-                        }
-
-                    }
-                }
+            if (app.Volume > 0 && app.AudioInt.IsMuted) {
+                app.AudioInt.IsMuted = false;
             }
+
+            app.AudioInt.MasterVolume = (volume / 100);
+
+            RefreshApps();
         }
 
         public static void ChangeState(string app_name, string state) {
-            using (var sessionManager = GetDefaultAudioSessionManager2(DataFlow.Render)) {
+            SoundApplication app = GetApplication(app_name);
 
-                using (var sessionEnumerator = sessionManager.GetSessionEnumerator()) {
+            if (app == null) return;
 
-                    foreach (var session in sessionEnumerator) {
+            app.AudioInt.IsMuted = state == "MUTE";
 
-                        using (var simpleVolume = session.QueryInterface<SimpleAudioVolume>())
-                        using (var sessionControl = session.QueryInterface<AudioSessionControl2>()) {
-
-                            if (sessionControl.Process.ProcessName.Contains(app_name)) {
-                                simpleVolume.IsMuted = state == "MUTE";
-                            }
-
-                            RefreshApps();
-                        }
-
-                    }
-                }
-            }
+            RefreshApps();
         }
 
         public static void RefreshApps() {
-            apps.Clear();
+            applications.Clear();
 
             using (var sessionManager = GetDefaultAudioSessionManager2(DataFlow.Render)) {
 
@@ -149,14 +145,16 @@ namespace MixerControllerF {
 
                     foreach (var session in sessionEnumerator) {
 
-                        using (var simpleVolume = session.QueryInterface<SimpleAudioVolume>())
+                        var simpleVolume = session.QueryInterface<SimpleAudioVolume>();
                         using (var sessionControl = session.QueryInterface<AudioSessionControl2>()) {
 
                             string name = sessionControl.Process.ProcessName;
                             float current_volume = simpleVolume.IsMuted ? -1 : simpleVolume.MasterVolume;
 
-                            if (!apps.ContainsKey(name)) {
-                                apps.Add(name, current_volume);
+                            if (!applications.ContainsKey(name)) {
+                                SoundApplication app = new SoundApplication(current_volume, ref simpleVolume);
+
+                                applications.Add(name, app);
                             }
                         }
 
@@ -174,11 +172,11 @@ namespace MixerControllerF {
         }
     }
 
-    public class MyCustomApplicationContext : ApplicationContext {
+    public class DefaultApp : ApplicationContext {
 
         private readonly NotifyIcon trayIcon;
 
-        public MyCustomApplicationContext() {
+        public DefaultApp() {
             trayIcon = new NotifyIcon() {
                 Icon = Icon.ExtractAssociatedIcon(Assembly.GetExecutingAssembly().Location),
                 ContextMenu = new ContextMenu(new MenuItem[] {
