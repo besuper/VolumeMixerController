@@ -11,10 +11,20 @@ namespace MixerController {
         private readonly NotifyIcon trayIcon;
 
         public DefaultApp() {
+
+            MenuItem StartupItem = new MenuItem {
+                Checked = Startup.IsInStartup(),
+                Text = "Startup"
+            };
+            StartupItem.Click += new EventHandler(StartupClick);
+
             trayIcon = new NotifyIcon() {
                 Icon = Icon.ExtractAssociatedIcon(Assembly.GetExecutingAssembly().Location),
                 ContextMenu = new ContextMenu(new MenuItem[] {
+                    StartupItem,
+                    new MenuItem("-"),
                     new MenuItem("Settings", Settings),
+                    new MenuItem("-"),
                     new MenuItem("Exit", Exit)
                 }),
                 Visible = true
@@ -29,6 +39,20 @@ namespace MixerController {
             trayIcon.Visible = false;
 
             Application.Exit();
+        }
+
+        void StartupClick(object sender, EventArgs e) {
+            MenuItem item = (MenuItem)sender;
+
+            if(item.Checked && Startup.IsInStartup()) {
+                Startup.RemoveFromStartup();
+            }
+
+            if(!item.Checked && !Startup.IsInStartup()) {
+                Startup.RunOnStartup();
+            }
+
+            item.Checked = !item.Checked;
         }
     }
 }
