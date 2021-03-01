@@ -1,28 +1,18 @@
 ﻿using System;
-using System.Drawing;
 using System.Windows.Forms;
-
-using System.Diagnostics;
 using CSCore.CoreAudioAPI;
 
 using System.Collections.Generic;
 using Fleck;
-using System.Reflection;
 using System.IO;
+using MixerController;
 
 namespace MixerControllerF {
 
-    public class SoundApplication {
-
-        public SoundApplication(float volume, ref SimpleAudioVolume audioInt) {
-            Volume = volume;
-            AudioInt = audioInt;
-        }
-
-        public float Volume { get; }
-
-        public SimpleAudioVolume AudioInt { get; }
-
+    static class Global {
+        public static string DEFAULT_FOLDER = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) + "\\MixerController";
+        public static string SETTINGS = "config.txt";
+        public static string DEFAULT_PATH = DEFAULT_FOLDER + "\\" + SETTINGS;
     }
 
     static class Program {
@@ -31,13 +21,11 @@ namespace MixerControllerF {
         [MTAThread]
         static void Main() {
 
-            var path = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) + "\\MixerController\\config.txt";
+            if (!File.Exists(Global.DEFAULT_PATH)) {
 
-            if (!File.Exists(path)) {
+                Directory.CreateDirectory(Global.DEFAULT_FOLDER);
 
-                Directory.CreateDirectory(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) + "\\MixerController");
-
-                using (FileStream fs = File.Create(path)) {
+                using (FileStream fs = File.Create(Global.DEFAULT_PATH)) {
                     byte[] info = new System.Text.UTF8Encoding(true).GetBytes("0.0.0.0:25565");
                     fs.Write(info, 0, info.Length);
                 }
@@ -45,8 +33,8 @@ namespace MixerControllerF {
 
             string ip = "";
 
-            if (File.Exists(path)) {
-                using (StreamReader sr = File.OpenText(path)) {
+            if (File.Exists(Global.DEFAULT_PATH)) {
+                using (StreamReader sr = File.OpenText(Global.DEFAULT_PATH)) {
                     ip = sr.ReadLine();
                 }
             }
@@ -169,32 +157,6 @@ namespace MixerControllerF {
                     return AudioSessionManager2.FromMMDevice(device);
                 }
             }
-        }
-    }
-
-    public class DefaultApp : ApplicationContext {
-
-        private readonly NotifyIcon trayIcon;
-
-        public DefaultApp() {
-            trayIcon = new NotifyIcon() {
-                Icon = Icon.ExtractAssociatedIcon(Assembly.GetExecutingAssembly().Location),
-                ContextMenu = new ContextMenu(new MenuItem[] {
-                    new MenuItem("Settings", Settings),
-                    new MenuItem("Exit", Exit)
-                }),
-                Visible = true
-            };
-        }
-
-        void Settings(object sender, EventArgs e) {
-            Process.Start("notepad.exe", Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) + "\\MixerController\\config.txt");
-        }
-
-        void Exit(object sender, EventArgs e) {
-            trayIcon.Visible = false;
-
-            Application.Exit();
         }
     }
 }
