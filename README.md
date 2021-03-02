@@ -20,6 +20,7 @@ You can use those commands:
 |MUTE:app_name|Mute a specified app.|
 |UNMUTE:app_name|Unmute a specified app.|
 |APPS|Show all application available in volume mixer in JSON format. <br>Ex: {"apps":{"Spotify": "1", "Discord": "0,5"}}|
+|INFO|Show informations about the computer. Return {"info":{"computer": "DESKTOP-AAAAAA"}}|
 
 ## Settings
 

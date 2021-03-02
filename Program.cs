@@ -11,8 +11,9 @@ namespace MixerControllerF {
 
     static class Global {
         public static string DEFAULT_FOLDER = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) + "\\MixerController";
-        public static string SETTINGS = "config.txt";
+        public const string SETTINGS = "config.txt";
         public static string DEFAULT_PATH = DEFAULT_FOLDER + "\\" + SETTINGS;
+        public static string COMPUTER_NAME = Environment.MachineName.ToString();
     }
 
     static class Program {
@@ -62,6 +63,12 @@ namespace MixerControllerF {
 
                     if (message.StartsWith("UNMUTE")) {
                         ChangeState(message.Split(':')[1], message.Split(':')[0]);
+                    }
+
+                    if(message.StartsWith("INFO")) {
+                        string to_send = "{\"info\":{\"computer\":\""+Global.COMPUTER_NAME+"\"}}";
+
+                        socket.Send(to_send);
                     }
 
                     if (message.StartsWith("APPS")) {
