@@ -90,9 +90,7 @@ namespace MixerControllerF {
         public static SoundApplication GetApplication(string app_name) {
             if (applications.ContainsKey(app_name)) {
 
-                SoundApplication app = null;
-
-                applications.TryGetValue(app_name, out app);
+                applications.TryGetValue(app_name, out SoundApplication app);
 
                 return app;
             }
@@ -140,9 +138,7 @@ namespace MixerControllerF {
                             float current_volume = simpleVolume.IsMuted ? -1 : simpleVolume.MasterVolume;
 
                             if (!applications.ContainsKey(name)) {
-                                SoundApplication app = new SoundApplication(current_volume, ref simpleVolume);
-
-                                applications.Add(name, app);
+                                applications.Add(name, new SoundApplication(current_volume, ref simpleVolume));
                             }
                         }
 
